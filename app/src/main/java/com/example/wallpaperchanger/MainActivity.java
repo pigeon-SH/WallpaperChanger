@@ -12,8 +12,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Activity;
 import android.app.WallpaperManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -80,9 +83,7 @@ public class MainActivity extends AppCompatActivity {
         now_wall = (ImageView)findViewById(R.id.imageview_nowwall);
         now_wall.setImageDrawable(wpm.getDrawable());
 
-        imageload();
-        changeWallpaper();
-        changeWallpaper_random();
+        button_init();
         adapter = new ImageAdapter(images, getApplicationContext());
         recyclerView = findViewById(R.id.recyclerview_images);
         recyclerView.setAdapter(adapter);
@@ -95,65 +96,75 @@ public class MainActivity extends AppCompatActivity {
         int num = (int)Math.floor(dpWidth / dp_image_width);
         recyclerView.setLayoutManager(new GridLayoutManager(this, num));
         //recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true));
+        screen_onoff();
     }
-    public void imageload(){
+    public void button_init(){
         Button btn_imgload = (Button) findViewById(R.id.imgload_multi_btn);
         btn_imgload.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                Intent intent = new Intent();
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                intent.setType("image/*");
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                mStartForResult.launch(intent);
+                imageload();
             }
         });
-    }
-    public void changeWallpaper(){
         Button btn_changeWP = (Button) findViewById(R.id.change_wallpaper);
         btn_changeWP.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                try {
-                    int pos = Integer.parseInt(setwall_pos.getText().toString());
-                    Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), images.get(pos));
-                    wpm.setBitmap(bmp);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                Toast.makeText(MainActivity.this, "Changed Wallpaper", Toast.LENGTH_LONG).show();
-                now_wall.setImageDrawable(wpm.getDrawable());
+                changeWallpaper();
             }
         });
-    }
-    public void changeWallpaper_random(){
         Button btn_changeWP_R = (Button) findViewById(R.id.change_wallpaper_random);
         btn_changeWP_R.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                try {
-                    int array_size = images.size();
-                    int pos = (int)Math.floor(Math.random() * array_size);
-                    Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), images.get(pos));
-                    wpm.setBitmap(bmp);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                Toast.makeText(MainActivity.this, "Changed Wallpaper", Toast.LENGTH_LONG).show();
-                now_wall.setImageDrawable(wpm.getDrawable());
+                changeWallpaper_random();
             }
         });
     }
-    @Override
-    public void onDestroy() {
-        Intent intent = new Intent(this, ForeService.class);
-        intent.setAction("startForeground");
-        intent.setClipData(clipData);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent);
-        } else{
-            startService(intent);
+    public void imageload(){
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        intent.setType("image/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        mStartForResult.launch(intent);
+    }
+    public void changeWallpaper(){
+        try {
+            int pos = Integer.parseInt(setwall_pos.getText().toString());
+            Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), images.get(pos));
+            wpm.setBitmap(bmp);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        super.onDestroy();
+        Toast.makeText(MainActivity.this, "Changed Wallpaper", Toast.LENGTH_LONG).show();
+        now_wall.setImageDrawable(wpm.getDrawable());
+    }
+    public void changeWallpaper_random(){
+        try {
+            int array_size = images.size();
+            int pos = (int)Math.floor(Math.random() * array_size);
+            Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), images.get(pos));
+            wpm.setBitmap(bmp);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Toast.makeText(MainActivity.this, "Changed Wallpaper", Toast.LENGTH_LONG).show();
+        now_wall.setImageDrawable(wpm.getDrawable());
+    }
+    public void screen_onoff(){
+        IntentFilter intentFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if(intent.getAction() == Intent.ACTION_SCREEN_OFF){
+
+                } else if(intent.getAction() == Intent.ACTION_SCREEN_ON){
+                    Toast.makeText(MainActivity.this, "Screen On", Toast.LENGTH_LONG).show();
+                    changeWallpaper_random();
+                }
+            }
+        };
+        registerReceiver(receiver, intentFilter);
     }
 }
