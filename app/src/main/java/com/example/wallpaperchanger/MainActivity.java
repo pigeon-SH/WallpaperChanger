@@ -35,14 +35,8 @@ import android.content.ClipData;
 import java.io.IOException;
 import java.util.ArrayList;
 
-//다중이미지 불러오기 + recyclerview: https://stickode.tistory.com/61 - 그리드레이아웃으로 해서 안되는듯
-//디스플레이 크기 구하기: https://lcw126.tistory.com/280
-//GridLayoutManager: https://developer.android.com/reference/androidx/recyclerview/widget/GridLayoutManager?hl=ko
-//Service(Foreground, Background...): https://junghun0.github.io/2019/06/09/android-service/
-//wpm.setBitmap 너무 느림 -> Thread: https://developer.android.com/guide/components/processes-and-threads?hl=ko#Threads
-
-
-// Need to do: Run in Background and change wallpaper when the screenlock button clicked
+//Problem: Changing wallpaper is too slow
+//Problem: When the device is locked, app does not work -> if setting no locks, changing wallpaper works when screen on
 
 public class MainActivity extends AppCompatActivity {
     WallpaperManager wpm;
@@ -110,7 +104,8 @@ public class MainActivity extends AppCompatActivity {
         btn_changeWP.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View view){
-                changeWallpaper();
+                int pos = Integer.parseInt(setwall_pos.getText().toString());
+                changeWallpaper(pos);
             }
         });
         Button btn_changeWP_R = (Button) findViewById(R.id.change_wallpaper_random);
@@ -128,9 +123,8 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         mStartForResult.launch(intent);
     }
-    public void changeWallpaper(){
+    public void changeWallpaper(int pos){
         try {
-            int pos = Integer.parseInt(setwall_pos.getText().toString());
             Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), images.get(pos));
             wpm.setBitmap(bmp);
         } catch (IOException e) {
@@ -140,16 +134,9 @@ public class MainActivity extends AppCompatActivity {
         now_wall.setImageDrawable(wpm.getDrawable());
     }
     public void changeWallpaper_random(){
-        try {
-            int array_size = images.size();
-            int pos = (int)Math.floor(Math.random() * array_size);
-            Bitmap bmp = MediaStore.Images.Media.getBitmap(getContentResolver(), images.get(pos));
-            wpm.setBitmap(bmp);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Toast.makeText(MainActivity.this, "Changed Wallpaper", Toast.LENGTH_LONG).show();
-        now_wall.setImageDrawable(wpm.getDrawable());
+        int array_size = images.size();
+        int pos = (int)Math.floor(Math.random() * array_size);
+        changeWallpaper(pos);
     }
     public void screen_onoff(){
         IntentFilter intentFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
